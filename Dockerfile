@@ -22,8 +22,9 @@ FROM alpine:latest
 WORKDIR /go/src/app
 
 # Copy only the built binary from the previous stage
-COPY --from=builder /app/myapp .
+COPY --from=builder /go/src/app/myapp .
 
+ENV GIN_MODE release
 # Expose the port your application runs on
 EXPOSE 8080
 
