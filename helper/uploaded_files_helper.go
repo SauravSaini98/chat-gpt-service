@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -55,7 +55,7 @@ func downloadImage(url string) ([]byte, string, error) {
 	}
 
 	// Read image data
-	imageData, err := ioutil.ReadAll(response.Body)
+	imageData, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, "", err
 	}
