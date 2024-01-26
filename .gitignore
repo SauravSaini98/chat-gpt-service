@@ -20,5 +20,8 @@
 # Go workspace file
 go.work
 
-ENV file
+#ENV file
 .env
+
+# uploaded file assets
+public/uploads

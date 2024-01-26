@@ -3,7 +3,7 @@
 CREATE TABLE uploaded_files (
     id SERIAL PRIMARY KEY,
     hash VARCHAR(255) UNIQUE,
-    content_data BYTEA,
+    file_url VARCHAR(255),
     content_type VARCHAR(255),
     deleted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,

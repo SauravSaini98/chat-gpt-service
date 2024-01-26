@@ -6,21 +6,19 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"chat-gpt-service/config"
 	"chat-gpt-service/controller"
 	"chat-gpt-service/db"
+	"chat-gpt-service/helper"
 
-	"github.com/gin-contrib/cache"
-	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	config, err := config.LoadConfig()
-	port := getEnv("PORT", "8080")
+	port := helper.GetEnvWithDefault("PORT", "8080")
 	if err != nil {
 		fmt.Println("Failed to load configuration")
 		return
@@ -36,16 +34,20 @@ func main() {
 
 	r.Use(cors.Default())
 
+	// Serve static files using the gin.Static middleware
+	r.Static("/uploads", "./public/uploads")
+
 	// Middleware to enable caching
-	store := persistence.NewInMemoryStore(time.Minute * 5)
+	// store := persistence.NewInMemoryStore(time.Minute * 5)
 
 	protectedRoutes := r.Group("/api")
 	protectedRoutes.Use(validateTokenMiddleware())
 
 	protectedRoutes.POST("/search", controller.GetChatGPTResponseHandler)
 	protectedRoutes.POST("/vision", controller.GetChatGPTVisionResponseHandler)
+	protectedRoutes.POST("/upload", controller.TestUploadedFileHandler)
 
-	r.GET("/files/:id", cache.CachePage(store, time.Hour, controller.GetUploadedFileHandler))
+	// r.GET("/files/:id", cache.CachePage(store, time.Hour, controller.GetUploadedFileHandler))
 
 	r.StaticFile("/favicon.ico", "./public/favicon.ico")
 	if err := r.Run(":" + port); err != nil {
@@ -53,13 +55,7 @@ func main() {
 	}
 }
 
-func getEnv(key, fallback string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-	return fallback
-}
-
+// Validate Auth token for middle ware
 func validateTokenMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get the value of the Authorization header

@@ -5,6 +5,8 @@ import (
 	"chat-gpt-service/db"
 	"chat-gpt-service/helper"
 	"chat-gpt-service/model"
+	"chat-gpt-service/uploader"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -122,7 +124,9 @@ func GetChatGPTVisionResponseHandler(c *gin.Context) {
 		return
 	}
 
-	imageUrl, err := helper.CheckAndSaveImage(imageUrl)
+	uploadedFile, err := uploader.CheckAndSaveImage(imageUrl)
+
+	fmt.Println("UPloaded File OBJECT", uploadedFile)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -130,7 +134,7 @@ func GetChatGPTVisionResponseHandler(c *gin.Context) {
 	}
 
 	var chatGPTNullResponse model.ChatGPTResponse
-	nullQuery := db.DB.Where("prompt = ? and engine = ? and image_url = ? and success IS null AND created_at > (NOW() - INTERVAL '5 minutes')", prompt, engine, imageUrl)
+	nullQuery := db.DB.Where("prompt = ? and engine = ? and uploaded_file_id = ? and success IS null AND created_at > (NOW() - INTERVAL '5 minutes')", prompt, engine, uploadedFile.ID)
 	if err := nullQuery.Last(&chatGPTNullResponse).Error; err == nil {
 		// Data found in the database
 		c.JSON(http.StatusBadRequest, gin.H{"errors": "Request already send please wait and resend it again"})
@@ -139,7 +143,7 @@ func GetChatGPTVisionResponseHandler(c *gin.Context) {
 
 	// Check the local database
 	var chatGPTResponse model.ChatGPTResponse
-	query := db.DB.Where("prompt = ? and success is true and engine = ? and image_url = ?", prompt, engine, imageUrl)
+	query := db.DB.Where("prompt = ? and success is true and engine = ? and uploaded_file_id = ?", prompt, engine, uploadedFile.ID)
 
 	if err := query.Last(&chatGPTResponse).Error; err == nil {
 		// Data found in the database
@@ -148,10 +152,11 @@ func GetChatGPTVisionResponseHandler(c *gin.Context) {
 		return
 	}
 
+	// imageFileUrl := uploadedFile.FileURL
 	newChatGPTResponse := model.ChatGPTResponse{
-		Engine:   "gpt-4-vision-preview",
-		Prompt:   prompt,
-		ImageURL: imageUrl,
+		Engine:         "gpt-4-vision-preview",
+		Prompt:         prompt,
+		UploadedFileID: uploadedFile.ID,
 	}
 
 	if err := db.DB.Create(&newChatGPTResponse).Error; err != nil {
@@ -159,8 +164,12 @@ func GetChatGPTVisionResponseHandler(c *gin.Context) {
 		return
 	}
 
+	uploadedFileUrl := uploadedFile.BuildFileUrl()
+
+	fmt.Println("UPloaded File URL", uploadedFileUrl)
+
 	// If data not found, make a request to a third-party API (simulated here)
-	response, err := helper.GetChatGptVisionResponse(prompt, imageUrl, 1000)
+	response, err := helper.GetChatGptVisionResponse(prompt, uploadedFileUrl, 1000)
 
 	if err != nil {
 		newChatGPTResponse.Success = false

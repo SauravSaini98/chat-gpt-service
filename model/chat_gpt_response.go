@@ -7,11 +7,12 @@ import (
 
 type ChatGPTResponse struct {
 	gorm.Model
-	Engine   string `json:"engine"`
-	Prompt   string `json:"prompt"`
-	Answer   string `gorm:"type:text" json:"answer"`
-	ImageURL string `json:"image_url"`
-	Success  bool   `json:"success"`
+	Engine         string       `json:"engine"`
+	Prompt         string       `json:"prompt"`
+	Answer         string       `gorm:"type:text" json:"answer"`
+	Success        bool         `json:"success"`
+	UploadedFileID uint         `json:"uploaded_file_id"`
+	UploadedFile   UploadedFile `gorm:"foreignkey:UploadedFileID"`
 }
 
 // TableName sets the table name for the ChatGPTResponse model.
