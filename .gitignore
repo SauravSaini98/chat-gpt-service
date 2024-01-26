@@ -22,6 +22,7 @@ go.work
 
 #ENV file
 .env
+app
 
 # uploaded file assets
 public/uploads
