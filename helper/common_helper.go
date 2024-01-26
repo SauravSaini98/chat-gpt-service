@@ -33,7 +33,7 @@ func BuildFileUrl(fileUrl string) (string, error) {
 	switch strings.ToLower(appEnvironment) {
 	case "production":
 		// Call the function to save to AWS S3
-		baseUrl = GetEnvWithDefault("AWS_S3_URL", "development")
+		baseUrl = GetEnvWithDefault("S3_HOST_URL", "http://localhost:8080/")
 	case "development":
 		// Call the function to save locally
 		baseUrl = GetEnvWithDefault("BASE_APP_URL", "http://localhost:8080/")
